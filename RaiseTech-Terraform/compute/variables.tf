@@ -45,8 +45,3 @@ variable "aws_managed_policy_parameter01" {
   type        = string
   default     = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
-
-variable "s3_bucket_name" {
-  description = "Name for the S3 bucket"
-  type        = string
-}
