@@ -1,26 +1,26 @@
 output "vpc_id" {
   description = "The ID of the created VPC"
-  value       = aws_vpc.raise_tech_vpc.id
+  value       = aws_vpc.raise_tech.id
 }
 
 output "public_subnet_1a_id" {
   description = "The ID of Public Subnet 1a"
-  value       = aws_subnet.public_subnet_1a.id
+  value       = aws_subnet.public_1a.id
 }
 
 output "public_subnet_1c_id" {
   description = "The ID of Public Subnet 1c"
-  value       = aws_subnet.public_subnet_1c.id
+  value       = aws_subnet.public_1c.id
 }
 
 output "private_subnet_1a_id" {
   description = "The ID of Private Subnet 1a"
-  value       = aws_subnet.private_subnet_1a.id
+  value       = aws_subnet.private_1a.id
 }
 
 output "private_subnet_1c_id" {
   description = "The ID of Private Subnet 1c"
-  value       = aws_subnet.private_subnet_1c.id
+  value       = aws_subnet.private_1c.id
 }
 
 output "internet_gateway_id" {
@@ -45,17 +45,17 @@ output "s3_gateway_endpoint_id" {
 
 output "security_group_alb_id" {
   description = "The ID of the Security Group for ALB"
-  value       = aws_security_group.security_group_alb.id
+  value       = aws_security_group.sg_alb.id
 }
 
 output "security_group_ec2_id" {
   description = "The ID of the Security Group for EC2"
-  value       = aws_security_group.security_group_ec2.id
+  value       = aws_security_group.sg_ec2.id
 }
 
 output "security_group_rds_id" {
   description = "The ID of the Security Group for RDS"
-  value       = aws_security_group.security_group_rds.id
+  value       = aws_security_group.sg_rds.id
 }
 
 output "iam_role_arn" {
@@ -100,7 +100,7 @@ output "alb_arn" {
 
 output "alb_target_group_arn" {
   description = "The ARN of the ALB Target Group"
-  value       = aws_lb_target_group.alb_target_group.arn
+  value       = aws_lb_target_group.alb_tg.arn
 }
 
 output "rds_master_user_secret_name" {
