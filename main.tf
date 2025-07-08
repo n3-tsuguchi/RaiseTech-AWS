@@ -19,7 +19,7 @@ resource "aws_subnet" "public_1c" {
   vpc_id                  = aws_vpc.raise_tech.id
   cidr_block              = "10.0.3.0/24"
   availability_zone       = "ap-northeast-1c"
-  map_public_ip_on_launch = true 
+  map_public_ip_on_launch = true
   tags = {
     Name = "PublicSubnet-1c"
   }
@@ -29,7 +29,7 @@ resource "aws_subnet" "private_1a" {
   vpc_id                  = aws_vpc.raise_tech.id
   cidr_block              = "10.0.2.0/24"
   availability_zone       = "ap-northeast-1a"
-  map_public_ip_on_launch = false 
+  map_public_ip_on_launch = false
   tags = {
     Name = "PrivateSubnet-1a"
   }
@@ -39,7 +39,7 @@ resource "aws_subnet" "private_1c" {
   vpc_id                  = aws_vpc.raise_tech.id
   cidr_block              = "10.0.4.0/24"
   availability_zone       = "ap-northeast-1c"
-  map_public_ip_on_launch = false 
+  map_public_ip_on_launch = false
   tags = {
     Name = "PrivateSubnet-1c"
   }
@@ -99,5 +99,38 @@ resource "aws_vpc_endpoint" "s3_gateway_endpoint" {
   route_table_ids   = [aws_route_table.private_route_table.id]
   tags = {
     Name = "S3GatewayEndpoint"
+  }
+}
+
+resource "random_password" "rds_master_password" {
+  length           = 16
+  special          = true
+  override_special = "!@#$&*()-_=+[]{}|:?./"
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+  min_special      = 1
+}
+
+resource "aws_secretsmanager_secret" "rds_master_user_secret" {
+  name_prefix = "rds-master-user-"
+  description = "Secret for RDS Master User"
+
+  tags = {
+    Name = "RDSMasterUserSecret"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "rds_master_user_secret_version" {
+  secret_id = aws_secretsmanager_secret.rds_master_user_secret.id
+  secret_string = jsonencode({
+    username = "admin"
+    password = random_password.rds_master_password.result
+  })
+
+  lifecycle {
+    ignore_changes = [
+      secret_string,
+    ]
   }
 }
