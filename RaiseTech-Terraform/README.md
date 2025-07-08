@@ -1,2 +1,0 @@
-- for CloudFomation
-- for Terraform
