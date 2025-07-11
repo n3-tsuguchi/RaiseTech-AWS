@@ -42,7 +42,7 @@ jobs:
         run: terraform validate -no-color
 
       - name: Run tfsec
-        uses: aquasecurity/tfsec-action@v1.2.2
+        uses: aquasecurity/tfsec-action@v1.0.0
 
       - name: Terraform Plan
         id: plan
