@@ -7,12 +7,11 @@ check "vpc_configuration" {
 }
 
 check "subnets_configuration" {
- 
+  
   assert {
     condition     = aws_subnet.public_1a.map_public_ip_on_launch == true
     error_message = "パブリックサブネット'${aws_subnet.public_1a.tags.Name}'で、パブリックIPの自動割り当てが無効になっています。"
   }
-
 
   assert {
     condition     = aws_subnet.public_1c.map_public_ip_on_launch == true
@@ -29,6 +28,43 @@ check "subnets_configuration" {
     error_message = "プライベートサブネット'${aws_subnet.private_1c.tags.Name}'で、パブリックIPの自動割り当てが有効になっています。"
   }
 }
+
+check "routing_configuration" {
+
+  assert {
+    condition     = aws_route.public_internet_route.route_table_id == aws_route_table.public_route_table.id
+    error_message = "デフォルトルートが、パブリックルートテーブルに関連付けられていません。"
+  }
+
+  assert {
+    condition     = aws_route.public_internet_route.destination_cidr_block == "0.0.0.0/0"
+    error_message = "パブリックルートの宛先が'0.0.0.0/0'ではありません。"
+  }
+
+  assert {
+    condition     = aws_route.public_internet_route.gateway_id == aws_internet_gateway.main_igw.id
+    error_message = "パブリックルートのゲートウェイが、意図しないインターネットゲートウェイを向いています。"
+  }
+}
+
+check "s3_vpc_endpoint_configuration" {
+ 
+  assert {
+    condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_id == aws_vpc.raise_tech.id
+    error_message = "S3ゲートウェイエンドポイントが予期しないVPCに接続されています。"
+  }
+
+  assert {
+    condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_endpoint_type == "Gateway"
+    error_message = "S3エンドポイントのタイプが'${aws_vpc_endpoint.s3_gateway_endpoint.vpc_endpoint_type}'です。'Gateway'タイプであるべきです。"
+  }
+
+  assert {
+    condition     = contains(aws_vpc_endpoint.s3_gateway_endpoint.route_table_ids, aws_route_table.private_route_table.id)
+    error_message = "S3ゲートウェイエンドポイントがプライベートルートテーブルに関連付けられていません。"
+  }
+}
+
 
 check "routing_configuration" {
   
