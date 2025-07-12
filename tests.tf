@@ -66,43 +66,6 @@ check "s3_vpc_endpoint_configuration" {
 }
 
 
-check "routing_configuration" {
-  
-  assert {
-    condition = anytrue([
-      for route in aws_route_table.public_route_table.routes :
-      route.destination_cidr_block == "0.0.0.0/0" && route.gateway_id == aws_internet_gateway.main_igw.id
-    ])
-    error_message = "パブリックルートテーブルに、インターネットゲートウェイへのデフォルトルート(0.0.0.0/0)が存在しません。"
-  }
-
-  assert {
-    condition = alltrue([
-      for route in aws_route_table.private_route_table.routes :
-      route.gateway_id != aws_internet_gateway.main_igw.id
-    ])
-    error_message = "セキュリティリスク: プライベートルートテーブルからインターネットゲートウェイへの直接ルートが見つかりました。"
-  }
-}
-
-check "s3_vpc_endpoint_configuration" {
-  
-  assert {
-    condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_id == aws_vpc.raise_tech.id
-    error_message = "S3ゲートウェイエンドポイントが予期しないVPCに接続されています。"
-  }
-
-  assert {
-    condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_endpoint_type == "Gateway"
-    error_message = "S3エンドポイントのタイプが'${aws_vpc_endpoint.s3_gateway_endpoint.vpc_endpoint_type}'です。'Gateway'タイプであるべきです。"
-  }
-
-  assert {
-    condition     = contains(aws_vpc_endpoint.s3_gateway_endpoint.route_table_ids, aws_route_table.private_route_table.id)
-    error_message = "S3ゲートウェイエンドポイントがプライベートルートテーブルに関連付けられていません。"
-  }
-}
-
 check "ec2_instance_configuration" {
 
   assert {
