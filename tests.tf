@@ -67,6 +67,58 @@ check "s3_vpc_endpoint_configuration" {
   }
 }
 
+check "ec2_instance_configuration" {
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1a.ami == var.ami_id
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1a.tags.Name}'のAMI IDが、変数で指定された値と異なります。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1a.instance_type == var.ec2_instance_type
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1a.tags.Name}'のインスタンスタイプが、変数で指定された値と異なります。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1a.associate_public_ip_address == true
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1a.tags.Name}'でパブリックIPアドレスの自動割り当てが無効になっています。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1a.iam_instance_profile == aws_iam_instance_profile.iam.name
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1a.tags.Name}'に予期しないIAMインスタンスプロファイルがアタッチされています。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1a.subnet_id == aws_subnet.public_1a.id
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1a.tags.Name}'が予期しないサブネットに配置されています。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1c.ami == var.ami_id
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1c.tags.Name}'のAMI IDが、変数で指定された値と異なります。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1c.instance_type == var.ec2_instance_type
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1c.tags.Name}'のインスタンスタイプが、変数で指定された値と異なります。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1c.associate_public_ip_address == true
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1c.tags.Name}'でパブリックIPアドレスの自動割り当てが無効になっています。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1c.iam_instance_profile == aws_iam_instance_profile.iam.name
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1c.tags.Name}'に予期しないIAMインスタンスプロファイルがアタッチされています。"
+  }
+
+  assert {
+    condition     = aws_instance.raise_tech_ec2_1c.subnet_id == aws_subnet.public_1c.id
+    error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1c.tags.Name}'が予期しないサブネットに配置されています。"
+  }
+}
 
 check "alb_configuration" {
 
