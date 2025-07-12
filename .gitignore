@@ -6,3 +6,4 @@
 
 # .terraformディレクトリも無視します
 .terraform/
+.terraform.lock.hcl
