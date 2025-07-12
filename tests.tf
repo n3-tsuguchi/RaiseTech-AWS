@@ -1,3 +1,73 @@
+check "vpc_configuration" {
+  
+  assert {
+    condition     = aws_vpc.raise_tech.cidr_block == "10.0.0.0/16"
+    error_message = "VPCのCIDRブロックが'${aws_vpc.raise_tech.cidr_block}'になっています。'10.0.0.0/16'であるべきです。"
+  }
+}
+
+check "subnets_configuration" {
+ 
+  assert {
+    condition     = aws_subnet.public_1a.map_public_ip_on_launch == true
+    error_message = "パブリックサブネット'${aws_subnet.public_1a.tags.Name}'で、パブリックIPの自動割り当てが無効になっています。"
+  }
+
+
+  assert {
+    condition     = aws_subnet.public_1c.map_public_ip_on_launch == true
+    error_message = "パブリックサブネット'${aws_subnet.public_1c.tags.Name}'で、パブリックIPの自動割り当てが無効になっています。"
+  }
+
+  assert {
+    condition     = aws_subnet.private_1a.map_public_ip_on_launch == false
+    error_message = "プライベートサブネット'${aws_subnet.private_1a.tags.Name}'で、パブリックIPの自動割り当てが有効になっています。"
+  }
+
+  assert {
+    condition     = aws_subnet.private_1c.map_public_ip_on_launch == false
+    error_message = "プライベートサブネット'${aws_subnet.private_1c.tags.Name}'で、パブリックIPの自動割り当てが有効になっています。"
+  }
+}
+
+check "routing_configuration" {
+  
+  assert {
+    condition = anytrue([
+      for route in aws_route_table.public_route_table.routes :
+      route.destination_cidr_block == "0.0.0.0/0" && route.gateway_id == aws_internet_gateway.main_igw.id
+    ])
+    error_message = "パブリックルートテーブルに、インターネットゲートウェイへのデフォルトルート(0.0.0.0/0)が存在しません。"
+  }
+
+  assert {
+    condition = alltrue([
+      for route in aws_route_table.private_route_table.routes :
+      route.gateway_id != aws_internet_gateway.main_igw.id
+    ])
+    error_message = "セキュリティリスク: プライベートルートテーブルからインターネットゲートウェイへの直接ルートが見つかりました。"
+  }
+}
+
+check "s3_vpc_endpoint_configuration" {
+  
+  assert {
+    condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_id == aws_vpc.raise_tech.id
+    error_message = "S3ゲートウェイエンドポイントが予期しないVPCに接続されています。"
+  }
+
+  assert {
+    condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_endpoint_type == "Gateway"
+    error_message = "S3エンドポイントのタイプが'${aws_vpc_endpoint.s3_gateway_endpoint.vpc_endpoint_type}'です。'Gateway'タイプであるべきです。"
+  }
+
+  assert {
+    condition     = contains(aws_vpc_endpoint.s3_gateway_endpoint.route_table_ids, aws_route_table.private_route_table.id)
+    error_message = "S3ゲートウェイエンドポイントがプライベートルートテーブルに関連付けられていません。"
+  }
+}
+
+
 check "alb_configuration" {
 
   assert {
