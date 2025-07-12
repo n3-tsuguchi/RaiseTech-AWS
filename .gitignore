@@ -3,3 +3,6 @@
 # Terraform state files
 *.tfstate
 *.tfstate.*
+
+# .terraformディレクトリも無視します
+.terraform/
