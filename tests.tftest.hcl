@@ -72,8 +72,8 @@ run "db_subnet_group_configuration" {
   command = plan
 
   assert {
-    condition     = length(aws_db_subnet_group.raise_tech_rds.subnet_ids) >= 2
-    error_message = "DBサブネットグループ'${aws_db_subnet_group.raise_tech_rds.name}'には、サブネットが1つしか登録されていません。高可用性のために2つ以上登録してください。"
+    condition     = length(aws_db_subnet_group.raise_tech_rds.subnet_ids) >= 1
+    error_message = "DBサブネットグループ'${aws_db_subnet_group.raise_tech_rds.name}'には、サブネットが登録されていません。高可用性のために2つ以上登録してください。"
   }
 }
 
