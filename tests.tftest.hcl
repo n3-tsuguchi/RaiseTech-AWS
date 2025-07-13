@@ -85,3 +85,5 @@ run "db_instance_configuration" {
     error_message = "RDSインスタンス'${aws_db_instance.raise_tech_rds.identifier}'のバックアップ保持期間が${aws_db_instance.raise_tech_rds.backup_retention_period}日です。データの保全のために7日以上に設定してください。"
   }
 }
+
+
