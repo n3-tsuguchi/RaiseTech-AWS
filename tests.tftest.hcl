@@ -1,4 +1,6 @@
 variables {
+  cidr_ip           = "10.0.0.0/16"
+  s3_bucket_name    = "my-test-bucket-for-raisetech"
   ami_id            = "ami-0c55b159cbfafe1f0"
   ec2_instance_type = "t2.micro"
   ec2_key_pair_name = "kawakami"
@@ -6,7 +8,6 @@ variables {
 }
 
 run "vpc_configuration" {
-
   command = plan
 
   assert {
@@ -70,7 +71,6 @@ run "s3_vpc_endpoint_configuration" {
   }
 }
 
-
 run "ec2_instance_configuration" {
   command = plan
 
@@ -82,7 +82,6 @@ run "ec2_instance_configuration" {
     condition     = aws_instance.raise_tech_ec2_1a.instance_type == var.ec2_instance_type
     error_message = "EC2インスタンス'${aws_instance.raise_tech_ec2_1a.tags.Name}'のインスタンスタイプが、変数で指定された値と異なります。"
   }
-
 }
 
 run "alb_and_listener_configuration" {
@@ -101,8 +100,6 @@ run "alb_and_listener_configuration" {
     error_message = "リスナーのプロトコルが '${aws_lb_listener.alb_listener.protocol}' です。'HTTP' である必要があります。"
   }
 }
-
-
 
 run "db_subnet_group_configuration" {
   command = plan
