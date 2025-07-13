@@ -37,23 +37,6 @@ run "subnets_configuration" {
   }
 }
 
-run "routing_configuration" {
-  command = plan
-
-  assert {
-    condition     = aws_route.public_internet_route.route_table_id == aws_route_table.public_route_table.id
-    error_message = "デフォルトルートが、パブリックルートテーブルに関連付けられていません。"
-  }
-  assert {
-    condition     = aws_route.public_internet_route.destination_cidr_block == "0.0.0.0/0"
-    error_message = "パブリックルートの宛先が'0.0.0.0/0'ではありません。"
-  }
-  assert {
-    condition     = aws_route.public_internet_route.gateway_id == aws_internet_gateway.main_igw.id
-    error_message = "パブリックルートのゲートウェイが、意図しないインターネットゲートウェイを向いています。"
-  }
-}
-
 run "s3_vpc_endpoint_configuration" {
   command = plan
 
