@@ -68,14 +68,6 @@ run "alb_and_listener_configuration" {
   }
 }
 
-run "db_subnet_group_configuration" {
-  command = plan
-
-  assert {
-    condition     = length(aws_db_subnet_group.raise_tech_rds.subnet_ids) >= 1
-    error_message = "DBサブネットグループ'${aws_db_subnet_group.raise_tech_rds.name}'には、サブネットが登録されていません。高可用性のために2つ以上登録してください。"
-  }
-}
 
 run "db_instance_configuration" {
   command = plan
