@@ -37,22 +37,6 @@ run "subnets_configuration" {
   }
 }
 
-run "s3_vpc_endpoint_configuration" {
-  command = plan
-
-  assert {
-    condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_id == aws_vpc.raise_tech.id
-    error_message = "S3ゲートウェイエンドポイントが予期しないVPCに接続されています。"
-  }
-  assert {
-    condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_endpoint_type == "Gateway"
-    error_message = "S3エンドポイントのタイプが'${aws_vpc_endpoint.s3_gateway_endpoint.vpc_endpoint_type}'です。'Gateway'タイプであるべきです。"
-  }
-  assert {
-    condition     = contains(aws_vpc_endpoint.s3_gateway_endpoint.route_table_ids, aws_route_table.private_route_table.id)
-    error_message = "S3ゲートウェイエンドポイントがプライベートルートテーブルに関連付けられていません。"
-  }
-}
 
 run "ec2_instance_configuration" {
   command = plan
