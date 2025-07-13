@@ -1,5 +1,5 @@
 resource "aws_vpc" "raise_tech" {
-  cidr_block = "10.0.0.1/16"
+  cidr_block = "10.0.0.0/16"
   tags = {
     Name = "RaiseTech_VPC"
   }
