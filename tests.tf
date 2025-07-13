@@ -1,5 +1,5 @@
 check "vpc_configuration" {
-  
+
   assert {
     condition     = aws_vpc.raise_tech.cidr_block == "10.0.0.0/16"
     error_message = "VPCのCIDRブロックが'${aws_vpc.raise_tech.cidr_block}'になっています。'10.0.0.0/16'であるべきです。"
@@ -7,7 +7,7 @@ check "vpc_configuration" {
 }
 
 check "subnets_configuration" {
-  
+
   assert {
     condition     = aws_subnet.public_1a.map_public_ip_on_launch == true
     error_message = "パブリックサブネット'${aws_subnet.public_1a.tags.Name}'で、パブリックIPの自動割り当てが無効になっています。"
@@ -48,7 +48,7 @@ check "routing_configuration" {
 }
 
 check "s3_vpc_endpoint_configuration" {
- 
+
   assert {
     condition     = aws_vpc_endpoint.s3_gateway_endpoint.vpc_id == aws_vpc.raise_tech.id
     error_message = "S3ゲートウェイエンドポイントが予期しないVPCに接続されています。"
@@ -179,7 +179,7 @@ check "listener_configuration" {
 }
 
 check "db_subnet_group_configuration" {
-  
+
   assert {
     condition     = length(aws_db_subnet_group.raise_tech_rds.subnet_ids) >= 2
     error_message = "DBサブネットグループ'${aws_db_subnet_group.raise_tech_rds.name}'には、サブネットが1つしか登録されていません。高可用性のために2つ以上登録してください。"
