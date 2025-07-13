@@ -1,12 +1,12 @@
 variables {
   ami_id            = "ami-0c55b159cbfafe1f0"
   ec2_instance_type = "t2.micro"
-  ec2_key_pair_name = "kawakami"  
+  ec2_key_pair_name = "kawakami"
   prefix            = "test-"
 }
 
 run "vpc_configuration" {
-  
+
   command = plan
 
   assert {
