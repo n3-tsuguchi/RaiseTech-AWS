@@ -1,7 +1,7 @@
 check "vpc_configuration" {
 
   assert {
-    condition     = aws_vpc.raise_tech.cidr_block == "10.0.0.0/16"
+    condition     = aws_vpc.raise_tech.cidr_block == "10.0.0.1/16"
     error_message = "VPCのCIDRブロックが'${aws_vpc.raise_tech.cidr_block}'になっています。'10.0.0.0/16'であるべきです。"
   }
 }
