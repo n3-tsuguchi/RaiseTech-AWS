@@ -27,6 +27,6 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Run Ansible Playbook
-        working-directory: .RaiseTech-Ansible
+        working-directory: .RaiseTech-Ansible/ansible
         run: ansible-playbook ansible/playbook.yml -i RaiseTech-ansible/ansible/inventory.ini
         
