@@ -1,3 +1,24 @@
+- name: Download MySQL Community repository RPM
+  become: yes
+  ansible.builtin.get_url:
+    url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+    dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
+    mode: "0644"
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+- name: Install MySQL Community repository from local RPM
+  become: yes
+  ansible.builtin.command: rpm -Uvh /tmp/mysql80-community-release-el9-1.noarch.rpm
+  args:
+    creates: /etc/yum.repos.d/mysql-community.repo
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+- name: Clean dnf cache to recognize new repository
+  become: yes
+  ansible.builtin.command: dnf clean all
+  changed_when: false
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
 - name: Install MySQL Community Server on Amazon Linux 2023
   become: yes
   ansible.builtin.dnf:
@@ -11,39 +32,3 @@
     name: mysqld
     state: started
     enabled: yes
-
-- name: Get the initial root password
-  become: yes
-  ansible.builtin.shell: "grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'"
-  register: initial_root_password
-  changed_when: false
-  until: initial_root_password.stdout != ""
-  retries: 5
-  delay: 2
-
-- name: Set new root password
-  become: yes
-  ansible.builtin.mysql_user:
-    name: root
-    host: localhost
-    password: "{{ secrets.MYSQL_ROOT_PASSWORD | default('YourStrongPassword123!') }}" # GitHub Secretsで管理することを推奨
-    login_user: root
-    login_password: "{{ initial_root_password.stdout }}"
-    check_implicit_admin: true
-
-- name: Remove anonymous MySQL users
-  become: yes
-  ansible.builtin.mysql_user:
-    name: ""
-    host_all: yes
-    state: absent
-    login_user: root
-    login_password: "{{ secrets.MYSQL_ROOT_PASSWORD | default('YourStrongPassword123!') }}"
-
-- name: Remove the test database
-  become: yes
-  ansible.builtin.mysql_db:
-    name: test
-    state: absent
-    login_user: root
-    login_password: "{{ secrets.MYSQL_ROOT_PASSWORD | default('YourStrongPassword123!') }}"
