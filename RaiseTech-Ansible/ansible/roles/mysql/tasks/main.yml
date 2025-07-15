@@ -1,21 +1,57 @@
 - name: Update all packages
   dnf:
-    name: '*'
+    name: "*"
     state: latest
     update_cache: yes
 
-- name: Install MariaDB server (MySQL compatible)
+- name: Find available MariaDB packages
+  shell: dnf list available | grep -i mariadb
+  register: mariadb_packages
+  changed_when: false
+  failed_when: false
+
+- name: Debug available MariaDB packages
+  debug:
+    var: mariadb_packages.stdout_lines
+
+- name: Find available MySQL packages
+  shell: dnf list available | grep -i mysql
+  register: mysql_packages
+  changed_when: false
+  failed_when: false
+
+- name: Debug available MySQL packages
+  debug:
+    var: mysql_packages.stdout_lines
+
+- name: Install mysql package
   dnf:
-    name: mariadb-server
+    name: mysql
     state: present
 
-- name: Start and enable MySQL/MariaDB service
+- name: Download MySQL repo RPM
+  get_url:
+    url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+    dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
+    mode: "0644"
+
+- name: Install MySQL repo
+  dnf:
+    name: /tmp/mysql80-community-release-el9-1.noarch.rpm
+    state: present
+
+- name: Install MySQL server from MySQL Community repo
+  dnf:
+    name: mysql-community-server
+    state: present
+
+- name: Start and enable MySQL service
   systemd:
-    name: mariadb
+    name: mysqld
     state: started
     enabled: yes
 
-- name: Set MySQL/MariaDB root password
+- name: Set MySQL root password
   mysql_user:
     name: root
     password: "{{ mysql_root_password }}"
