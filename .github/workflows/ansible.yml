@@ -16,6 +16,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: List all files in the repository
+        run: ls -R
+
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -27,6 +30,4 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Run Ansible Playbook
-        working-directory: .RaiseTech-Ansible/ansible
-        run: ansible-playbook ansible/playbook.yml -i RaiseTech-ansible/ansible/inventory.ini
-        
+        run: ansible-playbook RaiseTech-ansible/ansible/playbook.yml -i RaiseTech-ansible/ansible/inventory.ini
