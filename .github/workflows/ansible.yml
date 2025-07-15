@@ -15,9 +15,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: List all files in the repository
-        run: ls -R
-
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -28,12 +25,6 @@ jobs:
           python3 -m pip install --user ansible
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Check current directory before running playbook
-        run: |
-          echo "現在のディレクトリ:"
-          pwd
-          echo "ファイル一覧:"
-          ls -la
-
       - name: Run Ansible Playbook
+        working-directory: ./RaiseTech-ansible
         run: ansible-playbook ansible/playbook.yml -i ansible/inventory.ini
