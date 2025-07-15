@@ -27,5 +27,4 @@ jobs:
 
       - name: Run Ansible Playbook
 
-        working-directory: ./RaiseTech-AWS
         run: ansible-playbook ansible/playbook.yml -i ansible/inventory.ini
