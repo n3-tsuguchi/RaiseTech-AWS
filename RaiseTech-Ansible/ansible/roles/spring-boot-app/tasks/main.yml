@@ -3,8 +3,8 @@
   ansible.builtin.file:
     path: /opt/app
     state: directory
-    owner: ubuntu
-    group: ubuntu
+    owner: ec2-user
+    group: ec2-user
     mode: '0755'
 
 - name: Copy Spring Boot jar to the server
@@ -12,8 +12,8 @@
   ansible.builtin.copy:
     src: app.jar
     dest: /opt/app/app.jar
-    owner: ubuntu
-    group: ubuntu
+    owner: ec2-user
+    group: ec2-user
     mode: '0644'
 
 - name: Create systemd service file from template
