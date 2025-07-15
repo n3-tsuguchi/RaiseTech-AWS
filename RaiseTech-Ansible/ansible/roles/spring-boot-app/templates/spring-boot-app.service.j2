@@ -1,0 +1,12 @@
+[Unit]
+Description=Spring Boot Application
+After=syslog.target
+
+[Service]
+User=ubuntu
+ExecStart=/usr/bin/java -jar /opt/app/app.jar
+SuccessExitStatus=143
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

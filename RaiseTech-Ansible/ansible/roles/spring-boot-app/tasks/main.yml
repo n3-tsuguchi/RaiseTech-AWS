@@ -1,0 +1,33 @@
+- name: Create a directory for the application
+  become: yes
+  ansible.builtin.file:
+    path: /opt/app
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "0755"
+
+- name: Copy Spring Boot jar to the server
+  become: yes
+  ansible.builtin.copy:
+    src: app.jar
+    dest: /opt/app/app.jar
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+
+- name: Create systemd service file from template
+  become: yes
+  ansible.builtin.template:
+    src: spring-boot-app.service.j2
+    dest: /etc/systemd/system/spring-boot-app.service
+    mode: "0644"
+  notify: Restart Spring Boot App
+
+- name: Enable and start the service
+  become: yes
+  ansible.builtin.systemd:
+    name: spring-boot-app
+    enabled: yes
+    state: started
+    daemon_reload: yes
