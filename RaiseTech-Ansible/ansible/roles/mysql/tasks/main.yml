@@ -1,15 +1,23 @@
-- name: Add MySQL Community repository for Amazon Linux 2023
+- name: Download MySQL Community repository RPM
+  become: yes
+  ansible.builtin.get_url:
+    url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+    dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
+    mode: '0644'
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+- name: Install MySQL Community repository from local RPM
   become: yes
   ansible.builtin.dnf:
-    name: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+    name: /tmp/mysql80-community-release-el9-1.noarch.rpm
     state: present
-    disable_gpg_check: true 
+    disable_gpg_check: true
   when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
 - name: Install MySQL Community Server on Amazon Linux 2023
   become: yes
   ansible.builtin.dnf:
-    name: mysql-community-server 
+    name: mysql-community-server
     state: present
   when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
