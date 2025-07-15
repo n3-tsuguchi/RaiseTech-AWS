@@ -1,20 +1,16 @@
-name: ansible CI/CD
+name: 'Deploy Spring Boot App with Ansible'
 
 on:
   push:
     branches:
       - main
-      - ansible
   workflow_dispatch:
 
 jobs:
   deploy:
     name: Deploy with Ansible
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./RaiseTech-AWS
-        
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +26,6 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Run Ansible Playbook
+
+        working-directory: ./RaiseTech-AWS
         run: ansible-playbook ansible/playbook.yml -i ansible/inventory.ini
-
-
