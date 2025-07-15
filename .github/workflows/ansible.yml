@@ -30,4 +30,3 @@ jobs:
 
       - name: Run Ansible Playbook
         run: ansible-playbook RaiseTech-ansible/ansible/playbook.yml -i RaiseTech-ansible/ansible/inventory.ini
-        
