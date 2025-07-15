@@ -1,20 +1,49 @@
-- name: Install MySQL Community Server
-  yum:
+- name: Install MySQL Community Server on Amazon Linux 2023
+  become: yes
+  ansible.builtin.dnf:
     name: mysql-community-server
     state: present
-  when: ansible_distribution == "Amazon Linux" and ansible_distribution_major_version == "2023"
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
-- name: Start and enable MySQL service
-  service:
+- name: Start and enable mysqld service
+  become: yes
+  ansible.builtin.systemd:
     name: mysqld
     state: started
-    enabled: true
+    enabled: yes
 
-- name: Secure MySQL installation
-  shell: mysql_secure_installation
-  args:
-    removes:
-      - /var/log/mysqld.log
-    creates: /var/log/mysqld.log
-  when: ansible_distribution == "Amazon Linux" and ansible_distribution_major_version == "2023"
-  tags: secure
+- name: Get the initial root password
+  become: yes
+  ansible.builtin.shell: "grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'"
+  register: initial_root_password
+  changed_when: false
+  until: initial_root_password.stdout != ""
+  retries: 5
+  delay: 2
+
+- name: Set new root password
+  become: yes
+  ansible.builtin.mysql_user:
+    name: root
+    host: localhost
+    password: "{{ secrets.MYSQL_ROOT_PASSWORD | default('YourStrongPassword123!') }}" # GitHub Secretsで管理することを推奨
+    login_user: root
+    login_password: "{{ initial_root_password.stdout }}"
+    check_implicit_admin: true
+
+- name: Remove anonymous MySQL users
+  become: yes
+  ansible.builtin.mysql_user:
+    name: ""
+    host_all: yes
+    state: absent
+    login_user: root
+    login_password: "{{ secrets.MYSQL_ROOT_PASSWORD | default('YourStrongPassword123!') }}"
+
+- name: Remove the test database
+  become: yes
+  ansible.builtin.mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ secrets.MYSQL_ROOT_PASSWORD | default('YourStrongPassword123!') }}"
