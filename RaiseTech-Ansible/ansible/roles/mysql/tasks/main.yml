@@ -1,38 +1,15 @@
-- name: Update all packages
+- name: Update system packages
   dnf:
     name: "*"
     state: latest
     update_cache: yes
 
-- name: Find available MySQL packages
-  shell: dnf list available | grep -i mysql
-  register: mysql_packages
-  changed_when: false
-  failed_when: false
-
-- name: Debug available MySQL packages
-  debug:
-    var: mysql_packages.stdout_lines
-
-- name: Download MySQL repo RPM
-  get_url:
-    url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
-    dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
-    mode: "0644"
-
-- name: Install MySQL repo
+- name: Install MySQL server
   dnf:
-    name: /tmp/mysql80-community-release-el9-1.noarch.rpm
-    state: present
-  failed_when: false
-
-- name: Enable MySQL repo
-  shell: dnf config-manager --enable mysql80-community
-  failed_when: false
-
-- name: Install MySQL server from MySQL Community repo
-  dnf:
-    name: mysql-community-server
+    name:
+      - mysql-server
+      - mysql
+      - python3-PyMySQL
     state: present
 
 - name: Start and enable MySQL service
@@ -41,10 +18,77 @@
     state: started
     enabled: yes
 
+- name: Check if MySQL root password is set
+  shell: >
+    mysql -u root -p'{{ mysql_root_password }}' -e "SELECT 1"
+  register: mysql_root_check
+  failed_when: false
+  changed_when: false
+  no_log: true
+
 - name: Set MySQL root password
   mysql_user:
     name: root
     password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    state: present
+  when: mysql_root_check.rc != 0
+
+- name: Remove anonymous users
+  mysql_user:
+    name: ""
     host_all: yes
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-  no_log: true
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Remove test database
+  mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Disable remote root login
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  with_items:
+    - "{{ ansible_hostname }}"
+    - "127.0.0.1"
+    - "::1"
+    - "localhost"
+  failed_when: false
+
+- name: Create application database
+  mysql_db:
+    name: "{{ mysql_database }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  when: mysql_database is defined
+
+- name: Create application user
+  mysql_user:
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_user_password }}"
+    priv: "{{ mysql_database }}.*:ALL"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  when: mysql_user is defined and mysql_user_password is defined
+
+- name: Configure MySQL settings
+  template:
+    src: my.cnf.j2
+    dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+    backup: yes
+  notify: restart mysql
+
+- name: Ensure MySQL is running
+  systemd:
+    name: mysqld
+    state: started
