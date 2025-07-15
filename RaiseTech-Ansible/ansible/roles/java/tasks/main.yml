@@ -1,13 +1,6 @@
-- name: Bootstrap python3-apt using raw command
+- name: Install Java on Amazon Linux 2023
   become: yes
-  ansible.builtin.raw: apt-get update && apt-get install -y python3-apt
-  register: bootstrap_result
-  changed_when: "'0 upgraded, 0 newly installed' not in bootstrap_result.stdout"
-  failed_when: bootstrap_result.rc != 0 and "is already the newest version" not in bootstrap_result.stderr
-
-- name: Install OpenJDK 21
-  become: yes
-  ansible.builtin.apt:
-    name: openjdk-21-jdk
+  ansible.builtin.dnf:
+    name: java-21-amazon-corretto-devel
     state: present
-    update_cache: yes
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
