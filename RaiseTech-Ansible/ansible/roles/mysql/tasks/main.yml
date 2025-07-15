@@ -1,34 +1,24 @@
-- name: Download MySQL Community repository RPM
-  become: yes
-  ansible.builtin.get_url:
-    url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
-    dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
-    mode: "0644"
-  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+- name: Update all packages
+  dnf:
+    name: "*"
+    state: latest
+    update_cache: yes
 
-- name: Install MySQL Community repository from local RPM
-  become: yes
-  ansible.builtin.command: rpm -Uvh /tmp/mysql80-community-release-el9-1.noarch.rpm
-  args:
-    creates: /etc/yum.repos.d/mysql-community.repo
-  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
-
-- name: Clean dnf cache to recognize new repository
-  become: yes
-  ansible.builtin.command: dnf clean all
-  changed_when: false
-  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
-
-- name: Install MySQL Community Server on Amazon Linux 2023
-  become: yes
-  ansible.builtin.dnf:
-    name: mysql-community-server
+- name: Install MySQL server
+  dnf:
+    name: mysql-server
     state: present
-  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
-- name: Start and enable mysqld service
-  become: yes
-  ansible.builtin.systemd:
+- name: Start and enable MySQL service
+  systemd:
     name: mysqld
     state: started
     enabled: yes
+
+- name: Set MySQL root password
+  mysql_user:
+    name: root
+    password: "{{ mysql_root_password }}"
+    host_all: yes
+    login_unix_socket: /var/lib/mysql/mysql.sock
+  no_log: true
