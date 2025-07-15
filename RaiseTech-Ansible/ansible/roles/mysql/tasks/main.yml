@@ -1,9 +1,17 @@
-- name: Install MySQL Server on Amazon Linux
+- name: Add MySQL Community repository for Amazon Linux 2023
   become: yes
   ansible.builtin.dnf:
-    name: mysql-server
+    name: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
     state: present
-  when: ansible_os_family == "RedHat"
+    disable_gpg_check: true 
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+- name: Install MySQL Community Server on Amazon Linux 2023
+  become: yes
+  ansible.builtin.dnf:
+    name: mysql-community-server 
+    state: present
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
 - name: Start and enable mysqld service
   become: yes
