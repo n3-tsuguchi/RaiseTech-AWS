@@ -11,3 +11,4 @@
       ansible.builtin.systemd:
         name: spring-boot-app
         state: restarted
+        
