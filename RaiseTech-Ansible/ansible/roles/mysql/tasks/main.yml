@@ -4,16 +4,6 @@
     state: latest
     update_cache: yes
 
-- name: Find available MariaDB packages
-  shell: dnf list available | grep -i mariadb
-  register: mariadb_packages
-  changed_when: false
-  failed_when: false
-
-- name: Debug available MariaDB packages
-  debug:
-    var: mariadb_packages.stdout_lines
-
 - name: Find available MySQL packages
   shell: dnf list available | grep -i mysql
   register: mysql_packages
@@ -23,11 +13,6 @@
 - name: Debug available MySQL packages
   debug:
     var: mysql_packages.stdout_lines
-
-- name: Install mysql package
-  dnf:
-    name: mysql
-    state: present
 
 - name: Download MySQL repo RPM
   get_url:
@@ -39,6 +24,11 @@
   dnf:
     name: /tmp/mysql80-community-release-el9-1.noarch.rpm
     state: present
+  failed_when: false
+
+- name: Enable MySQL repo
+  shell: dnf config-manager --enable mysql80-community
+  failed_when: false
 
 - name: Install MySQL server from MySQL Community repo
   dnf:
