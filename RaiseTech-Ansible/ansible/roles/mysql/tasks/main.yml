@@ -1,0 +1,13 @@
+- name: Install MySQL Server on Amazon Linux
+  become: yes
+  ansible.builtin.dnf:
+    name: mysql-server
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Start and enable mysqld service
+  become: yes
+  ansible.builtin.systemd:
+    name: mysqld
+    state: started
+    enabled: yes
