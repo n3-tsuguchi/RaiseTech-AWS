@@ -1,0 +1,13 @@
+- name: Deploy Spring Boot Application
+  hosts: web_servers
+  become: yes
+  roles:
+    - java
+    - spring-boot-app
+
+  handlers:
+    - name: Restart Spring Boot App
+      become: yes
+      ansible.builtin.systemd:
+        name: spring-boot-app
+        state: restarted
