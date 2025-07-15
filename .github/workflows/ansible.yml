@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: List files in the repository
+      - name: List all files in the repository
         run: ls -R
 
       - name: Setup SSH
@@ -28,6 +28,12 @@ jobs:
           python3 -m pip install --user ansible
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Check current directory before running playbook
+        run: |
+          echo "現在のディレクトリ:"
+          pwd
+          echo "ファイル一覧:"
+          ls -la
+
       - name: Run Ansible Playbook
-        working-directory: ./RaiseTech-Ansible
         run: ansible-playbook ansible/playbook.yml -i ansible/inventory.ini
