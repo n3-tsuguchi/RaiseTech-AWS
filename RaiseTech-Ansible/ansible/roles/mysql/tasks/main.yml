@@ -1,94 +1,103 @@
 - name: Update system packages
-  dnf:
-    name: "*"
-    state: latest
-    update_cache: yes
+dnf:
+  name: "*"
+  state: latest
+  update_cache: yes
 
-- name: Install MySQL server
-  dnf:
-    name:
-      - mysql-server
-      - mysql
-      - python3-PyMySQL
-    state: present
+# Alternative: MariaDB installation (MySQL compatible)
+# roles/mysql/tasks/main.yml
+---
+- name: Update system packages
+dnf:
+  name: "*"
+  state: latest
+  update_cache: yes
 
-- name: Start and enable MySQL service
-  systemd:
-    name: mysqld
-    state: started
-    enabled: yes
+- name: Install MariaDB (MySQL compatible)
+dnf:
+  name:
+    - mariadb-server
+    - mariadb
+    - python3-PyMySQL
+  state: present
+
+- name: Start and enable MariaDB service
+systemd:
+  name: mariadb
+  state: started
+  enabled: yes
 
 - name: Check if MySQL root password is set
-  shell: >
-    mysql -u root -p'{{ mysql_root_password }}' -e "SELECT 1"
-  register: mysql_root_check
-  failed_when: false
-  changed_when: false
-  no_log: true
+shell: >
+  mysql -u root -p'{{ mysql_root_password }}' -e "SELECT 1"
+register: mysql_root_check
+failed_when: false
+changed_when: false
+no_log: true
 
 - name: Set MySQL root password
-  mysql_user:
-    name: root
-    password: "{{ mysql_root_password }}"
-    login_unix_socket: /var/lib/mysql/mysql.sock
-    state: present
-  when: mysql_root_check.rc != 0
+mysql_user:
+  name: root
+  password: "{{ mysql_root_password }}"
+  login_unix_socket: /var/lib/mysql/mysql.sock
+  state: present
+when: mysql_root_check.rc != 0
 
 - name: Remove anonymous users
-  mysql_user:
-    name: ""
-    host_all: yes
-    state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
+mysql_user:
+  name: ""
+  host_all: yes
+  state: absent
+  login_user: root
+  login_password: "{{ mysql_root_password }}"
 
 - name: Remove test database
-  mysql_db:
-    name: test
-    state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
+mysql_db:
+  name: test
+  state: absent
+  login_user: root
+  login_password: "{{ mysql_root_password }}"
 
 - name: Disable remote root login
-  mysql_user:
-    name: root
-    host: "{{ item }}"
-    state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-  with_items:
-    - "{{ ansible_hostname }}"
-    - "127.0.0.1"
-    - "::1"
-    - "localhost"
-  failed_when: false
+mysql_user:
+  name: root
+  host: "{{ item }}"
+  state: absent
+  login_user: root
+  login_password: "{{ mysql_root_password }}"
+with_items:
+  - "{{ ansible_hostname }}"
+  - "127.0.0.1"
+  - "::1"
+  - "localhost"
+failed_when: false
 
 - name: Create application database
-  mysql_db:
-    name: "{{ mysql_database }}"
-    state: present
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-  when: mysql_database is defined
+mysql_db:
+  name: "{{ mysql_database }}"
+  state: present
+  login_user: root
+  login_password: "{{ mysql_root_password }}"
+when: mysql_database is defined
 
 - name: Create application user
-  mysql_user:
-    name: "{{ mysql_user }}"
-    password: "{{ mysql_user_password }}"
-    priv: "{{ mysql_database }}.*:ALL"
-    state: present
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-  when: mysql_user is defined and mysql_user_password is defined
+mysql_user:
+  name: "{{ mysql_user }}"
+  password: "{{ mysql_user_password }}"
+  priv: "{{ mysql_database }}.*:ALL"
+  state: present
+  login_user: root
+  login_password: "{{ mysql_root_password }}"
+when: mysql_user is defined and mysql_user_password is defined
 
 - name: Configure MySQL settings
-  template:
-    src: my.cnf.j2
-    dest: /etc/mysql/mysql.conf.d/mysqld.cnf
-    backup: yes
-  notify: restart mysql
+template:
+  src: my.cnf.j2
+  dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+  backup: yes
+notify: restart mysql
 
 - name: Ensure MySQL is running
-  systemd:
-    name: mysqld
-    state: started
+systemd:
+  name: mysqld
+  state: started
