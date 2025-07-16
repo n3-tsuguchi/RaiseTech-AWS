@@ -7,10 +7,10 @@
     - spring-boot-app
 
   handlers:
-    - name: restart mariadb
+    - name: restart mysql
       become: yes
       ansible.builtin.systemd:
-        name: mariadb
+        name: mysqld
         state: restarted
 
     - name: Restart Spring Boot App
