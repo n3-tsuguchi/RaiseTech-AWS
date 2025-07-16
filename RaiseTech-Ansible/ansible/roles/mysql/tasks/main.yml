@@ -4,19 +4,21 @@
     update_cache: yes
   when: ansible_os_family == "RedHat"
 
-- name: Download MySQL Community repository RPM using curl
+- name: Download MySQL Community repository RPM
   become: yes
-  ansible.builtin.shell: >
-    curl -L -A "Mozilla/5.0" -o /tmp/mysql80-community-release-el9-1.noarch.rpm https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
-  args:
-    creates: /tmp/mysql80-community-release-el9-1.noarch.rpm
+  ansible.builtin.get_url:
+    url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+    dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
+    mode: '0644'
+    timeout: 60
   when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
 - name: Install MySQL Community repository from local RPM
   become: yes
-  ansible.builtin.command: rpm -Uvh /tmp/mysql80-community-release-el9-1.noarch.rpm
-  args:
-    creates: /etc/yum.repos.d/mysql-community.repo
+  ansible.builtin.dnf:
+    name: /tmp/mysql80-community-release-el9-1.noarch.rpm
+    state: present
+    disable_gpg_check: true
   when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
 - name: Install MySQL Community Server and dependencies
