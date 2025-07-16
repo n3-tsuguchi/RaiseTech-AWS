@@ -1,4 +1,4 @@
-- name: Deploy Spring Boot Application
+- name: Deploy Spring Boot Application with MySQL
   hosts: web_servers
   become: no
   roles:
@@ -6,15 +6,13 @@
     - mysql
     - spring-boot-app
 
-  pre_tasks:
-    - name: Install Ansible on the target node (for Amazon Linux 2023)
-      become: yes
-      ansible.builtin.dnf:
-        name: ansible-core
-        state: present
-      when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
-
   handlers:
+    - name: restart mariadb
+      become: yes
+      ansible.builtin.systemd:
+        name: mariadb
+        state: restarted
+
     - name: Restart Spring Boot App
       become: yes
       ansible.builtin.systemd:

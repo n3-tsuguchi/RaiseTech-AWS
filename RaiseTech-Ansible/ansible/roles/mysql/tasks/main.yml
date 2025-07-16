@@ -1,70 +1,53 @@
-- name: Update system packages
-  dnf:
-    name: "*"
-    state: latest
-    update_cache: yes
-
-- name: Install MariaDB (MySQL compatible)
-  dnf:
+- name: Install MariaDB (MySQL compatible) and required Python library
+  become: yes
+  ansible.builtin.dnf:
     name:
       - mariadb-server
-      - mariadb
       - python3-PyMySQL
     state: present
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
 
 - name: Start and enable MariaDB service
-  systemd:
+  become: yes
+  ansible.builtin.systemd:
     name: mariadb
     state: started
     enabled: yes
 
-- name: Check if MySQL root password is set
-  shell: >
-    mysql -u root -p'{{ mysql_root_password }}' -e "SELECT 1"
-  register: mysql_root_check
-  failed_when: false
-  changed_when: false
-  no_log: true
-
-- name: Set MySQL root password
-  mysql_user:
+- name: Set the root password for the first time
+  become: yes
+  ansible.builtin.mysql_user:
     name: root
+    host: localhost
     password: "{{ mysql_root_password }}"
-    login_unix_socket: /var/lib/mysql/mysql.sock
-    state: present
-  when: mysql_root_check.rc != 0
+    check_implicit_admin: true # This allows setting password without the old one on initial setup
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  no_log: true # Do not log the password
 
-- name: Remove anonymous users
-  mysql_user:
+- name: Remove anonymous MySQL users
+  become: yes
+  ansible.builtin.mysql_user:
     name: ""
     host_all: yes
     state: absent
     login_user: root
     login_password: "{{ mysql_root_password }}"
+  no_log: true
 
-- name: Remove test database
-  mysql_db:
+- name: Remove the test database
+  become: yes
+  ansible.builtin.mysql_db:
     name: test
     state: absent
     login_user: root
     login_password: "{{ mysql_root_password }}"
-
-- name: Disable remote root login
-  mysql_user:
-    name: root
-    host: "{{ item }}"
-    state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-  with_items:
-    - "{{ ansible_hostname }}"
-    - "127.0.0.1"
-    - "::1"
-    - "localhost"
-  failed_when: false
+  no_log: true
 
 - name: Create application database
-  mysql_db:
+  become: yes
+  ansible.builtin.mysql_db:
     name: "{{ mysql_database }}"
     state: present
     login_user: root
@@ -72,23 +55,23 @@
   when: mysql_database is defined
 
 - name: Create application user
-  mysql_user:
+  become: yes
+  ansible.builtin.mysql_user:
     name: "{{ mysql_user }}"
     password: "{{ mysql_user_password }}"
     priv: "{{ mysql_database }}.*:ALL"
     state: present
     login_user: root
     login_password: "{{ mysql_root_password }}"
+  no_log: true
   when: mysql_user is defined and mysql_user_password is defined
 
-- name: Configure MySQL settings
-  template:
+- name: Copy custom MySQL configuration file
+  become: yes
+  ansible.builtin.template:
     src: my.cnf.j2
     dest: /etc/my.cnf.d/custom.cnf
-    backup: yes
-  notify: restart mysql
-
-- name: Ensure MySQL is running
-  systemd:
-    name: mariadb
-    state: started
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart mariadb
