@@ -1,9 +1,15 @@
+- name: Update dnf cache
+  become: yes
+  ansible.builtin.dnf:
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+
 - name: Download MySQL Community repository RPM
   become: yes
   ansible.builtin.get_url:
     url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
     dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
-    mode: "0644"
+    mode: '0644'
   when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
 - name: Install MySQL Community repository from local RPM
@@ -13,7 +19,7 @@
     creates: /etc/yum.repos.d/mysql-community.repo
   when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
-- name: Install MySQL Community Server and Python library
+- name: Install MySQL Community Server and dependencies
   become: yes
   ansible.builtin.dnf:
     name:
@@ -90,3 +96,13 @@
     login_password: "{{ mysql_root_password }}"
   no_log: true
   when: mysql_user is defined and mysql_user_password is defined
+
+- name: Copy custom MySQL configuration file
+  become: yes
+  ansible.builtin.template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf.d/custom.cnf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart mysql
