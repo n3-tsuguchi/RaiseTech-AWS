@@ -10,6 +10,7 @@
     url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
     dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
     mode: '0644'
+    timeout: 60
   when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
 - name: Install MySQL Community repository from local RPM
