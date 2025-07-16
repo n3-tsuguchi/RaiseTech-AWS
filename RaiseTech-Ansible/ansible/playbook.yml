@@ -7,12 +7,6 @@
     - spring-boot-app
 
   handlers:
-    - name: restart mysql
-      become: yes
-      ansible.builtin.systemd:
-        name: mysqld
-        state: restarted
-
     - name: Restart Spring Boot App
       become: yes
       ansible.builtin.systemd:
