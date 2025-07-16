@@ -1,30 +1,55 @@
-- name: Install MariaDB (MySQL compatible) and required Python library
+- name: Download MySQL Community repository RPM
+  become: yes
+  ansible.builtin.get_url:
+    url: https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+    dest: /tmp/mysql80-community-release-el9-1.noarch.rpm
+    mode: "0644"
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+- name: Install MySQL Community repository from local RPM
+  become: yes
+  ansible.builtin.command: rpm -Uvh /tmp/mysql80-community-release-el9-1.noarch.rpm
+  args:
+    creates: /etc/yum.repos.d/mysql-community.repo
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+- name: Install MySQL Community Server and Python library
   become: yes
   ansible.builtin.dnf:
     name:
-      - mariadb-server
+      - mysql-community-server
       - python3-PyMySQL
     state: present
-    update_cache: yes
-  when: ansible_os_family == "RedHat"
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
 
-- name: Start and enable MariaDB service
+- name: Start and enable mysqld service
   become: yes
   ansible.builtin.systemd:
-    name: mariadb
+    name: mysqld
     state: started
     enabled: yes
 
-- name: Set the root password for the first time
+- name: Get the initial root password
+  become: yes
+  ansible.builtin.shell: "grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'"
+  register: initial_root_password
+  changed_when: false
+  until: initial_root_password.stdout != ""
+  retries: 5
+  delay: 2
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
+
+- name: Set new root password
   become: yes
   ansible.builtin.mysql_user:
     name: root
     host: localhost
     password: "{{ mysql_root_password }}"
-    check_implicit_admin: true # This allows setting password without the old one on initial setup
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
-  no_log: true # Do not log the password
+    login_user: root
+    login_password: "{{ initial_root_password.stdout }}"
+    check_implicit_admin: true
+  no_log: true
+  when: initial_root_password.stdout != ""
 
 - name: Remove anonymous MySQL users
   become: yes
@@ -65,13 +90,3 @@
     login_password: "{{ mysql_root_password }}"
   no_log: true
   when: mysql_user is defined and mysql_user_password is defined
-
-- name: Copy custom MySQL configuration file
-  become: yes
-  ansible.builtin.template:
-    src: my.cnf.j2
-    dest: /etc/my.cnf.d/custom.cnf
-    owner: root
-    group: root
-    mode: '0644'
-  notify: restart mariadb
