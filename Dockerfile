@@ -4,9 +4,7 @@
 # Multi-stage build を利用して、最終的なイメージサイズを小さく保ちます。
 
 # --- ビルドステージ ---
-# ★★★ 変更点: ベースイメージを Amazon Corretto に変更 ★★★
-# これまでのイメージ(eclipse-temurin)との相性問題を回避するため、
-# 広く使われている別のJDKディストリビューションを試します。
+# ベースイメージとして Amazon Corretto を使用します。
 FROM amazoncorretto:17-al2-jdk AS builder
 
 # 作業ディレクトリを設定
@@ -24,7 +22,7 @@ COPY src src
 # gradlewに実行権限を付与
 RUN chmod +x ./gradlew
 
-# Gradleのメモリ使用量を制限 (念のため維持)
+# Gradleのメモリ使用量を制限
 ENV GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx512m"
 
 # 依存関係の解決とビルドを一つのステップにまとめます。
@@ -35,8 +33,9 @@ RUN ls -l /workspace/build/libs
 
 
 # --- 実行ステージ ---
-# ★★★ 変更点: 実行ステージもベースイメージを統一 ★★★
-FROM amazoncorretto:17-al2-jre
+# ★★★ 変更点: 実行ステージのイメージをビルドステージと統一 ★★★
+# これにより "image not found" エラーを解決し、環境の一貫性を保ちます。
+FROM amazoncorretto:17-al2-jdk
 
 # アプリケーションのポート番号
 EXPOSE 8080
