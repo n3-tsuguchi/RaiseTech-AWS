@@ -1,0 +1,6 @@
+- name: Install Java on Amazon Linux 2023
+  become: yes
+  ansible.builtin.dnf:
+    name: java-21-amazon-corretto-devel
+    state: present
+  when: ansible_distribution == "Amazon" and ansible_distribution_major_version == "2023"
