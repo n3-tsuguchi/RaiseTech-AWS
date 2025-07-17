@@ -1,6 +1,6 @@
 - name: Deploy Spring Boot WAR Application
   hosts: web_servers
-  become: no
+  become: yes
   vars:
     app_jar_path: ../build/libs/demo-0.0.1-SNAPSHOT.jar
     remote_app_dir: /opt/springboot_app
