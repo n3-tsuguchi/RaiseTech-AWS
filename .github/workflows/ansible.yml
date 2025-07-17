@@ -26,10 +26,6 @@ jobs:
           echo "[al2023]" > inventory
           echo "${{ secrets.HOST }} ansible_user=${{ secrets.SSH_USER }}" >> inventory
 
-      - name: Create vars file
-        run: |
-          echo "mysql_root_password: ${{ secrets.MYSQL_ROOT_PASSWORD }}" > vars.yml
-
       - name: Setup Ansible
         run: |
           python3 -m pip install --user ansible

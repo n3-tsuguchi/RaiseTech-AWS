@@ -1,5 +1,4 @@
 - name: Reload systemd and restart app
-  listen: "Reload systemd and restart app"
   block:
     - name: Reload systemd daemon
       ansible.builtin.systemd:
