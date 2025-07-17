@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 HELP.md
 .gradle
 build/
@@ -35,3 +36,14 @@ out/
 
 ### VS Code ###
 .vscode/
+=======
+# .gitignore
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# .terraformディレクトリも無視します
+.terraform/
+.terraform.lock.hcl
+>>>>>>> b241843a8e1bd374fd4d5c9a533f57aaf2eee48f
