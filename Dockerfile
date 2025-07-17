@@ -5,7 +5,7 @@
 
 # --- ビルドステージ ---
 # JDKが含まれるイメージをベースに、アプリケーションをビルドします。
-FROM eclipse-temurin:21-jdk-jammy as builder
+FROM eclipse-temurin:17-jdk-jammy as builder
 
 # 作業ディレクトリを設定
 WORKDIR /workspace
@@ -19,19 +19,23 @@ COPY settings.gradle .
 # gradlewに実行権限を付与
 RUN chmod +x ./gradlew
 
-# これにより、ソースコードの変更だけでは再ダウンロードが走らなくなり、ビルドが高速化します。
+# 依存関係のみをダウンロードしてキャッシュする
 RUN ./gradlew dependencies
 
 # アプリケーションのソースコードをコピー
 COPY src src
 
-# テストはスキップして時間短縮
+# アプリケーションをビルド
 RUN ./gradlew build -x test
+
+# ★★★ デバッグ用コマンドを追加 ★★★
+# ビルド後に build/libs ディレクトリの中身を確認します
+RUN ls -l /workspace/build/libs
 
 
 # --- 実行ステージ ---
 # JRE（Java実行環境）のみが含まれる、より軽量なイメージをベースにします。
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:17-jre-jammy
 
 # アプリケーションのポート番号
 EXPOSE 8080
