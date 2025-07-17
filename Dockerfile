@@ -5,7 +5,6 @@
 
 # --- ビルドステージ ---
 # JDKが含まれるイメージをベースに、アプリケーションをビルドします。
-# ★★★ 変更点: Dockerのベストプラクティスに従い 'as' を 'AS' に修正 ★★★
 FROM eclipse-temurin:17-jdk-jammy AS builder
 
 # 作業ディレクトリを設定
@@ -20,15 +19,15 @@ COPY settings.gradle .
 # gradlewに実行権限を付与
 RUN chmod +x ./gradlew
 
-# ★★★ 変更点: --no-daemon オプションを追加してCI環境での安定性を向上 ★★★
-# 依存関係のみをダウンロードしてキャッシュする
-RUN ./gradlew dependencies --no-daemon --stacktrace
+# ★★★ 変更点: 'dependencies' の代わりに 'classes' タスクを使用して依存関係を解決 ★★★
+# これにより、CI環境での安定性が向上することがあります。
+RUN ./gradlew classes --no-daemon --stacktrace
 
 # アプリケーションのソースコードをコピー
 COPY src src
 
 # アプリケーションをビルド
-# ★★★ 変更点: こちらにも --no-daemon を追加して一貫性を保つ ★★★
+# (テストはスキップし、デーモンは使用しない)
 RUN ./gradlew build -x test --no-daemon --stacktrace
 
 # ビルド後に build/libs ディレクトリの中身を確認します
