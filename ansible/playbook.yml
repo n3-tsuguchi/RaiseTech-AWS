@@ -1,5 +1,5 @@
 - name: Deploy Spring Boot WAR Application
-  hosts: web_servers
+  hosts: 18.183.168.64
   become: yes
   vars:
     app_jar_path: ../build/libs/demo-0.0.1-SNAPSHOT.jar
