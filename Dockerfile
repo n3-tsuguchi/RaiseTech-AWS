@@ -16,16 +16,18 @@ COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 
-# ★★★ 変更点: 先にソースコードをコピー ★★★
-# ビルドプロセスを簡素化するため、ソースコードを先にコピーします。
+# ソースコードをコピー
 COPY src src
 
 # gradlewに実行権限を付与
 RUN chmod +x ./gradlew
 
-# ★★★ 変更点: ビルドコマンドに一本化 ★★★
+# ★★★ 変更点: Gradleのメモリ使用量を制限 ★★★
+# CI環境でのメモリ不足によるビルド失敗を防ぐため、
+# GRADLE_OPTS環境変数を設定して最大ヒープサイズを512MBに制限します。
+ENV GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx512m"
+
 # 依存関係の解決とビルドを一つのステップにまとめ、安定性を向上させます。
-# これまでの `classes` や `dependencies` のステップは削除しました。
 RUN ./gradlew build -x test --no-daemon --stacktrace
 
 # ビルド後に build/libs ディレクトリの中身を確認します
