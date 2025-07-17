@@ -1,9 +1,0 @@
-- name: Copy Spring Boot war to the Tomcat webapps directory
-  become: yes
-  ansible.builtin.copy:
-    src: app.war
-    dest: /opt/tomcat/webapps/app.war
-    owner: tomcat
-    group: tomcat
-    mode: "0644"
-  notify: restart tomcat
