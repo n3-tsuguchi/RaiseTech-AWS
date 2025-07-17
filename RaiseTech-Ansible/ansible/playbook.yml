@@ -1,14 +1,14 @@
-- name: Deploy Spring Boot Application with MySQL
+- name: Deploy Spring Boot WAR Application
   hosts: web_servers
   become: no
   roles:
     - java
-    - mysql
+    - tomcat
     - spring-boot-app
 
   handlers:
-    - name: Start Spring Boot App
+    - name: restart tomcat
       become: yes
       ansible.builtin.systemd:
-        name: spring-boot-app
-        state: started
+        name: tomcat
+        state: restarted

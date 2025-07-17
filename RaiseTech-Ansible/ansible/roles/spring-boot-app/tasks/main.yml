@@ -1,62 +1,9 @@
-- name: Create a directory for the application
-  become: yes
-  ansible.builtin.file:
-    path: /opt/app
-    state: directory
-    owner: ec2-user
-    group: ec2-user
-    mode: '0755'
-
-- name: Copy Spring Boot jar to the server
+- name: Copy Spring Boot war to the Tomcat webapps directory
   become: yes
   ansible.builtin.copy:
-    src: app.jar
-    dest: /opt/app/app.jar
-    owner: ec2-user
-    group: ec2-user
-    mode: '0644'
-
-- name: Create systemd service file from template
-  become: yes
-  ansible.builtin.template:
-    src: spring-boot-app.service.j2
-    dest: /etc/systemd/system/spring-boot-app.service
-    mode: '0644'
-  notify: Restart Spring Boot App
-
-- name: Enable and start the service, with error handling
-  block:
-    - name: Enable and start the spring-boot-app service
-      become: yes
-      ansible.builtin.systemd:
-        name: spring-boot-app
-        enabled: yes
-        state: started
-        daemon_reload: yes
-  rescue:
-    - name: Check the service status if startup failed
-      become: yes
-      ansible.builtin.command: systemctl status spring-boot-app.service
-      register: service_status
-      changed_when: false
-
-    - name: Get service journal logs if startup failed
-      become: yes
-      ansible.builtin.command: journalctl -xeu spring-boot-app.service --no-pager
-      register: service_journal
-      changed_when: false
-
-    - name: Display failure logs
-      ansible.builtin.debug:
-        msg: |
-          Service failed to start!
-          ==================== STATUS ====================
-          {{ service_status.stdout }}
-          {{ service_status.stderr }}
-          ==================== JOURNAL ===================
-          {{ service_journal.stdout }}
-          {{ service_journal.stderr }}
-
-    - name: Fail the playbook to make the error visible
-      ansible.builtin.fail:
-        msg: "The spring-boot-app service failed to start. Please check the logs above for details."
+    src: app.war
+    dest: /opt/tomcat/webapps/app.war
+    owner: tomcat
+    group: tomcat
+    mode: "0644"
+  notify: restart tomcat
