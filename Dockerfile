@@ -1,40 +1,46 @@
-# --- ステージ1: ビルドステージ ---
-# アプリケーションをビルドするための環境
-# GradleとJDK 17を含むイメージをベースにします
-FROM gradle:8.5-jdk17-focal AS build
+# -----------------------------------------------------------------
+# Dockerfile: Spring Bootアプリケーションをコンテナイメージ化する
+# -----------------------------------------------------------------
+# Multi-stage build を利用して、最終的なイメージサイズを小さく保ちます。
+
+# --- ビルドステージ ---
+# ★★★ 変更点: Gradle公式の専用イメージを使用 ★★★
+# これまでの環境依存の問題を根本的に解決するため、
+# Gradleの実行に最適化された公式イメージに切り替えます。
+FROM gradle:8.5.0-jdk17 AS builder
 
 # 作業ディレクトリを設定
-WORKDIR /home/gradle/project
+WORKDIR /workspace
 
-# 最初にビルド設定ファイルをコピーして、依存関係をダウンロードします
-# これにより、ソースコードの変更時にも依存関係のレイヤーはキャッシュが利用され、ビルドが高速になります
-COPY build.gradle settings.gradle ./
+# Gradleのビルド定義ファイルのみをコピー
+# (gradlew と gradle/ ディレクトリは不要になります)
+COPY build.gradle .
+COPY settings.gradle .
 
-# Gradleの依存関係を解決
-RUN gradle build --no-daemon || return 0
+# ソースコードをコピー
+COPY src src
 
-# アプリケーションのソースコードをコピー
-COPY src ./src
+# Gradleのメモリ使用量を制限 (念のため維持)
+ENV GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx512m"
 
-# アプリケーションをビルドして実行可能なJARファイルを作成します
-# bootJarタスクは、Spring Bootアプリケーションを実行可能な単一のJARにパッケージングします
-RUN gradle bootJar --no-daemon
+# ★★★ 変更点: gradle コマンドでビルドを実行 ★★★
+# プリインストールされたgradleを直接使用します。
+# --info オプションで、より詳細なログを出力します。
+RUN gradle build -x test --no-daemon --info --stacktrace
+
+# ビルド後に build/libs ディレクトリの中身を確認します
+RUN ls -l /workspace/build/libs
 
 
-# --- ステージ2: 実行ステージ ---
-# ビルドされたアプリケーションを実行するための環境
-# JREのみを含む、より軽量なイメージをベースにします
-FROM openjdk:17-jre-slim
+# --- 実行ステージ ---
+# ★★★ 変更点: 実行イメージを軽量で安定した temurin に戻す ★★★
+FROM eclipse-temurin:17-jre-jammy
 
-# 作業ディレクトリを設定
-WORKDIR /app
-
-# ビルドステージから生成されたJARファイルをコピーします
-# ワイルドカード(*)を使って、バージョン番号が変動しても対応できるようにします
-COPY --from=build /home/gradle/project/build/libs/*.jar app.jar
-
-# アプリケーションがリッスンするポートを公開
+# アプリケーションのポート番号
 EXPOSE 8080
 
+# ビルドステージから、ビルド済みの.jarファイルのみをコピー
+COPY --from=builder /workspace/build/libs/*.jar app.jar
+
 # コンテナ起動時にアプリケーションを実行するコマンド
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "/app.jar"]
