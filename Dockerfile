@@ -15,6 +15,11 @@ COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
+
+# ★★★ gradlewに実行権限を付与するコマンドを追加 ★★★
+RUN chmod +x ./gradlew
+
+# 依存関係をダウンロード（ビルドを試みてキャッシュを作成）
 RUN ./gradlew build || return 0
 COPY src src
 
