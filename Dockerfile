@@ -16,18 +16,16 @@ COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 
+# ★★★ 変更点: 先にソースコードをコピー ★★★
+# ビルドプロセスを簡素化するため、ソースコードを先にコピーします。
+COPY src src
+
 # gradlewに実行権限を付与
 RUN chmod +x ./gradlew
 
-# ★★★ 変更点: 'dependencies' の代わりに 'classes' タスクを使用して依存関係を解決 ★★★
-# これにより、CI環境での安定性が向上することがあります。
-RUN ./gradlew classes --no-daemon --stacktrace
-
-# アプリケーションのソースコードをコピー
-COPY src src
-
-# アプリケーションをビルド
-# (テストはスキップし、デーモンは使用しない)
+# ★★★ 変更点: ビルドコマンドに一本化 ★★★
+# 依存関係の解決とビルドを一つのステップにまとめ、安定性を向上させます。
+# これまでの `classes` や `dependencies` のステップは削除しました。
 RUN ./gradlew build -x test --no-daemon --stacktrace
 
 # ビルド後に build/libs ディレクトリの中身を確認します
