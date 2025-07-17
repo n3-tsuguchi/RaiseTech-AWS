@@ -1,14 +1,11 @@
 - name: Deploy Spring Boot WAR Application
   hosts: web_servers
   become: no
+  vars:
+    app_jar_path: ../build/libs/demo-0.0.1-SNAPSHOT.jar
+    remote_app_dir: /opt/springboot_app
+    remote_app_jar_name: app.jar
+
   roles:
     - java
-    - tomcat
-    - spring-boot-app
-
-  handlers:
-    - name: restart tomcat
-      become: yes
-      ansible.builtin.systemd:
-        name: tomcat
-        state: restarted
+    - springboot_app
