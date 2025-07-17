@@ -19,16 +19,16 @@ COPY settings.gradle .
 # gradlewに実行権限を付与
 RUN chmod +x ./gradlew
 
+# ★★★ 変更点: --stacktrace オプションを追加して詳細なエラーログを取得 ★★★
 # 依存関係のみをダウンロードしてキャッシュする
-RUN ./gradlew dependencies
+RUN ./gradlew dependencies --stacktrace
 
 # アプリケーションのソースコードをコピー
 COPY src src
 
 # アプリケーションをビルド
-RUN ./gradlew build -x test
+RUN ./gradlew build -x test --stacktrace
 
-# ★★★ デバッグ用コマンドを追加 ★★★
 # ビルド後に build/libs ディレクトリの中身を確認します
 RUN ls -l /workspace/build/libs
 
