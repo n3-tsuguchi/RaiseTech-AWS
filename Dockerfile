@@ -4,8 +4,10 @@
 # Multi-stage build を利用して、最終的なイメージサイズを小さく保ちます。
 
 # --- ビルドステージ ---
-# JDKが含まれるイメージをベースに、アプリケーションをビルドします。
-FROM eclipse-temurin:17-jdk-jammy AS builder
+# ★★★ 変更点: ベースイメージを Amazon Corretto に変更 ★★★
+# これまでのイメージ(eclipse-temurin)との相性問題を回避するため、
+# 広く使われている別のJDKディストリビューションを試します。
+FROM amazoncorretto:17-al2-jdk AS builder
 
 # 作業ディレクトリを設定
 WORKDIR /workspace
@@ -22,12 +24,10 @@ COPY src src
 # gradlewに実行権限を付与
 RUN chmod +x ./gradlew
 
-# ★★★ 変更点: Gradleのメモリ使用量を制限 ★★★
-# CI環境でのメモリ不足によるビルド失敗を防ぐため、
-# GRADLE_OPTS環境変数を設定して最大ヒープサイズを512MBに制限します。
+# Gradleのメモリ使用量を制限 (念のため維持)
 ENV GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx512m"
 
-# 依存関係の解決とビルドを一つのステップにまとめ、安定性を向上させます。
+# 依存関係の解決とビルドを一つのステップにまとめます。
 RUN ./gradlew build -x test --no-daemon --stacktrace
 
 # ビルド後に build/libs ディレクトリの中身を確認します
@@ -35,14 +35,13 @@ RUN ls -l /workspace/build/libs
 
 
 # --- 実行ステージ ---
-# JRE（Java実行環境）のみが含まれる、より軽量なイメージをベースにします。
-FROM eclipse-temurin:17-jre-jammy
+# ★★★ 変更点: 実行ステージもベースイメージを統一 ★★★
+FROM amazoncorretto:17-al2-jre
 
 # アプリケーションのポート番号
 EXPOSE 8080
 
 # ビルドステージから、ビルド済みの.jarファイルのみをコピー
-# ファイル名を app.jar に統一することで、実行コマンドを固定化できます。
 COPY --from=builder /workspace/build/libs/*.jar app.jar
 
 # コンテナ起動時にアプリケーションを実行するコマンド
