@@ -7,8 +7,8 @@
     - spring-boot-app
 
   handlers:
-    - name: Restart Spring Boot App
+    - name: Start Spring Boot App
       become: yes
       ansible.builtin.systemd:
         name: spring-boot-app
-        state: restarted
+        state: started
