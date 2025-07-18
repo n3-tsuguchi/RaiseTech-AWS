@@ -28,7 +28,6 @@
         name: springboot-app
         image: "{{ docker_image_name }}:latest"
         state: started
-        restart_policy: always
         pull: yes
         ports:
           - "8080:8080"
