@@ -24,7 +24,8 @@ RUN ./gradlew bootJar --no-daemon
 
 # --- ステージ2: 実行ステージ ---
 # ビルドされたアプリケーションを実行するための、より軽量な環境
-FROM openjdk:17-jre-slim
+# ベースイメージを openjdk から eclipse-temurin に変更
+FROM eclipse-temurin:17-jre-focal
 
 # 作業ディレクトリを設定
 WORKDIR /app
