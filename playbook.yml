@@ -1,4 +1,4 @@
-- hosts: web_servers
+- hosts: 54.95.126.66
   become: yes
 
   vars:
