@@ -1,4 +1,4 @@
-- hosts: 54.95.126.66
+- hosts: all
   become: yes
 
   vars:
