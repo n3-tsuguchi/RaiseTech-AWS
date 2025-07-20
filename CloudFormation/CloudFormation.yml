@@ -1,0 +1,430 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Network_Layer Template (Corrected)
+
+Parameters:
+  CIDRIP:
+    Type: String
+    Description: The CIDR IP for MyIP
+  
+  S3BucketName:
+    Type: String
+    Description: Name for the S3 bucket
+    MinLength: 3
+    Default: raise-tech-s3-bucket
+
+  Prefix:
+    Type: String
+    Description: The prefix name of the RaiseTech
+  AWSManagedPolicyParameter01:
+    Type: String
+    Description: ARN of IAM Managed Policy to add to the role
+    Default: arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+Resources:
+  RaiseTechVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: RaiseTechVPC
+
+  PublicSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref RaiseTechVPC
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: ap-northeast-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet1a
+
+  PrivateSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref RaiseTechVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: ap-northeast-1a
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet1a
+
+  PublicSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref RaiseTechVPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: ap-northeast-1c
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet1c
+
+  PrivateSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref RaiseTechVPC
+      CidrBlock: 10.0.4.0/24
+      AvailabilityZone: ap-northeast-1c
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet1c
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternetGateway
+  
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref RaiseTechVPC
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref RaiseTechVPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref RaiseTechVPC
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTable
+
+  PublicRouteTableAssociation1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1a
+
+  PublicRouteTableAssociation1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1c
+
+  PrivateRouteTableAssociation1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1a
+
+  PrivateRouteTableAssociation1c:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1c
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref PublicRouteTable
+      GatewayId: !Ref InternetGateway
+
+  VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+      ServiceName: com.amazonaws.ap-northeast-1.s3
+      VpcEndpointType: Gateway
+      VpcId: !Ref RaiseTechVPC
+
+  SecurityGroupALB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroupALB
+      GroupName: SecurityGroupALB
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref CIDRIP
+      Tags:
+        - Key: Name
+          Value: SecurityGroupALB
+      VpcId: !Ref RaiseTechVPC
+
+  SecurityGroupEC2:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroupEC2
+      GroupName: SecurityGroupEC2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref SecurityGroupALB
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref CIDRIP
+      Tags:
+        - Key: Name
+          Value: SecurityGroupEC2
+      VpcId: !Ref RaiseTechVPC
+
+  SecurityGroupRDS:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroupRDS
+      GroupName: SecurityGroupRDS
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref SecurityGroupEC2
+      Tags:
+        - Key: Name
+          Value: SecurityGroupRDS
+      VpcId: !Ref RaiseTechVPC
+
+  RaiseTechS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      VersioningConfiguration:
+        Status: Enabled
+
+  RootRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref AWSManagedPolicyParameter01
+
+  IamInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref RootRole
+
+  RaiseTechEC21a:
+    Type: AWS::EC2::Instance
+    Properties:
+      NetworkInterfaces:
+        - SubnetId: !Ref PublicSubnet1a
+          GroupSet:
+            - !Ref SecurityGroupEC2
+          DeviceIndex: 0
+      InstanceType: t2.micro
+      ImageId: ami-0af1df87db7b650f4
+      IamInstanceProfile: !Ref IamInstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}EC21a
+      KeyName: RaiseTech
+
+  RaiseTechEC21c:
+    Type: AWS::EC2::Instance
+    Properties:
+      NetworkInterfaces:
+        - SubnetId: !Ref PublicSubnet1c
+          GroupSet:
+            - !Ref SecurityGroupEC2
+          DeviceIndex: 0
+      InstanceType: t2.micro
+      ImageId: ami-0af1df87db7b650f4
+      IamInstanceProfile: !Ref IamInstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}EC21c
+      KeyName: RaiseTech
+
+  RDSMasterUserSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: "RDSMasterUserSecret"
+      Description: "Secret for RDS Master User"
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"admin"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
+  RaiseTechRDS:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage : 20
+      DBInstanceClass: db.t3.micro
+      Port: 3306
+      StorageType: gp2
+      BackupRetentionPeriod: 7
+      MasterUsername: admin
+      MasterUserPassword: '{{resolve:secretsmanager:RDSMasterUserSecret:SecretString:password}}'
+      DBInstanceIdentifier: RaiseTech-DB
+      DBName: RaiseTechRDS
+      Engine: mysql
+      EngineVersion: 8.0
+      DBSubnetGroupName: !Ref RaiseTechRDSSubnetGroup
+      MultiAZ: true
+      VPCSecurityGroups:
+        - !Ref SecurityGroupRDS
+
+  RaiseTechRDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "RaiseTechDBSubnetGroup"
+      DBSubnetGroupName: RaiseTechRDSSubnetGroup
+      SubnetIds:
+        - !Ref PrivateSubnet1a
+        - !Ref PrivateSubnet1c
+
+  RaiseTechALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      IpAddressType: ipv4
+      Name: RaiseTechALB
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref SecurityGroupALB
+      Subnets:
+        - !Ref PrivateSubnet1a
+        - !Ref PrivateSubnet1c
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}ALB
+
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: ALBTargetGroup
+      Port: 80
+      Protocol: HTTP
+      Targets:
+        - Id:
+            Ref: RaiseTechEC21a
+          Port: 80
+        - Id:
+            Ref: RaiseTechEC21c
+          Port: 80
+      VpcId: !Ref RaiseTechVPC
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            !Ref ALBTargetGroup
+      LoadBalancerArn:
+        !Ref RaiseTechALB
+      Port: 80
+      Protocol: HTTP
+
+  RaiseTechAlarmSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: RaiseTechEC2AlarmTopic
+      TopicName: !Sub ${Prefix}-EC2-CPU-Alarm-Topic
+
+  EC2CPUAlarm1a:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub "${Prefix}EC21a CPU utilization exceeds 70%"
+      AlarmName: !Sub "${Prefix}-EC2-CPU-High-Alarm-1a"
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref RaiseTechEC21a
+      Statistic: Average
+      Period: 300 
+      EvaluationPeriods: 1
+      Threshold: 70
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching 
+      AlarmActions:
+        - !Ref RaiseTechAlarmSNSTopic
+      OKActions:
+        - !Ref RaiseTechAlarmSNSTopic
+
+  EC2CPUAlarm1c:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub "${Prefix}EC21c CPU utilization exceeds 70%"
+      AlarmName: !Sub "${Prefix}-EC2-CPU-High-Alarm-1c"
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref RaiseTechEC21c
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1 
+      Threshold: 70 
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref RaiseTechAlarmSNSTopic
+      OKActions:
+        - !Ref RaiseTechAlarmSNSTopic
+
+
+Outputs:
+  RaiseTechVPC:
+    Value: !Ref RaiseTechVPC
+    Export:
+      Name: RaiseTechVPC-VPCID
+  PublicSubnet1a:
+    Value: !Ref PublicSubnet1a
+    Export:
+      Name: PublicSubnet1a-SubnetID
+  PublicSubnet1c:
+    Value: !Ref PublicSubnet1c
+    Export:
+      Name: PublicSubnet1c-SubnetID
+  PrivateSubnet1a:
+    Value: !Ref PrivateSubnet1a
+    Export:
+      Name: PrivateSubnet1a-SubnetID
+  PrivateSubnet1c:
+    Value: !Ref PrivateSubnet1c
+    Export:
+      Name: PrivateSubnet1c-SubnetID
+  SecurityGroupEC2:
+    Value: !Ref SecurityGroupEC2
+    Export:
+      Name: SGID-EC2
+  SecurityGroupRDS:
+    Value: !Ref SecurityGroupRDS
+    Export:
+      Name: SGID-RDS
+  SecurityGroupALB:
+    Value: !Ref SecurityGroupALB
+    Export:
+      Name: SGID-ALB
+  EC2AlarmSNSTopicARN:
+    Description: SNS Topic ARN for EC2 CPU Alarms
+    Value: !Ref RaiseTechAlarmSNSTopic
+    Export:
+      Name: EC2-CPU-Alarm-SNS-Topic-ARN
+      
